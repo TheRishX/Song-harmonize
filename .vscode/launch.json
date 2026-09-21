@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Song harmonize}",
+            "name": "Debug SongHarmonize",
+            "target": "SongHarmonize",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug SongHarmonize"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Song harmonize}",
+            "name": "Release SongHarmonize",
+            "target": "SongHarmonize",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release SongHarmonize"
+        }
+    ]
+}
