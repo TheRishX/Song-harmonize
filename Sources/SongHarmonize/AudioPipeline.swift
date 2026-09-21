@@ -150,14 +150,12 @@ struct HarmonyPipeline: Sendable {
 
             progress(PipelineUpdate(stage: .separating, progress: 0.22))
             var vocal = decoded.samples
-            let warnings: [String] = []
+            var warnings: [String] = []
             switch ModelAssetLocator.status() {
-            case let .ready(separator):
-                vocal = try CoreMLVocalIsolator(modelURL: separator).isolate(sourceURL) { fraction in
-                    progress(PipelineUpdate(stage: .separating, progress: 0.22 + fraction * 0.20))
-                }
+            case let .ready(separator, _):
+                vocal = try CoreMLVocalIsolator(modelURL: separator).isolate(decoded.samples)
             case .unavailable:
-                throw HarmonyError.modelsRequired
+                warnings.append("Preview isolation is active because the bundled Core ML model assets are not installed; exported tracks include elements of the original mix.")
             }
             try Task.checkCancellation()
 

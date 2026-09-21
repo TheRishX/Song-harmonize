@@ -53,7 +53,7 @@ enum HarmonyError: LocalizedError {
         case .invalidAudio: "This audio file could not be decoded."
         case .exportFailed: "The harmony stems could not be written."
         case .cancelled: "Generation was cancelled."
-        case .modelsRequired: "Download the free AI model before generating harmonies."
+        case .modelsRequired: "The bundled Core ML model assets are unavailable."
         }
     }
 }

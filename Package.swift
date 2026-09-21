@@ -10,10 +10,7 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "SongHarmonize",
-            resources: [
-                .copy("Resources/Models"),
-                .process("Resources/THIRD_PARTY_NOTICES.md")
-            ]
+            resources: [.process("Resources")]
         ),
         .testTarget(name: "SongHarmonizeTests", dependencies: ["SongHarmonize"])
     ]

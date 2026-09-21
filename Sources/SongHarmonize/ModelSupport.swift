@@ -1,6 +1,9 @@
 @preconcurrency import AVFoundation
 @preconcurrency import CoreML
+<<<<<<< ours
 import CryptoKit
+=======
+>>>>>>> theirs
 import Foundation
 
 enum ModelAssetStatus: Sendable {
@@ -8,6 +11,7 @@ enum ModelAssetStatus: Sendable {
     case unavailable
 }
 
+<<<<<<< ours
 enum ModelPaths {
     static let packageName = "HTDemucs_CoreML_FP16.mlpackage"
 
@@ -154,6 +158,22 @@ enum ModelDownloader {
 }
 
 /// Local HTDemucs Core ML runner. The downloaded FP16 package accepts 10 seconds
+=======
+enum ModelAssetLocator {
+    static func status(bundle: Bundle = .module) -> ModelAssetStatus {
+        guard let separator = bundle.url(
+            forResource: "HTDemucs_CoreML_FP16",
+            withExtension: "mlpackage",
+            subdirectory: "Models"
+        ) else {
+            return .unavailable
+        }
+        return .ready(separator: separator)
+    }
+}
+
+/// Local HTDemucs Core ML runner. The bundled FP16 package accepts 10 seconds
+>>>>>>> theirs
 /// of 44.1 kHz stereo Float32 audio (`audio` [1,2,441000]) and produces four
 /// stems (`sources` [1,4,2,441000]), with vocals at stem index zero.
 final class CoreMLVocalIsolator: @unchecked Sendable {
@@ -164,8 +184,20 @@ final class CoreMLVocalIsolator: @unchecked Sendable {
 
     init(modelURL: URL) throws {
         let configuration = MLModelConfiguration()
+<<<<<<< ours
         configuration.computeUnits = .cpuAndGPU
         let compiledURL = modelURL.pathExtension == "mlpackage" ? try MLModel.compileModel(at: modelURL) : modelURL
+=======
+        // This HTDemucs conversion is GPU-stable; its conversion notes advise
+        // against ANE execution, so `.all` would be less reliable here.
+        configuration.computeUnits = .cpuAndGPU
+        let compiledURL: URL
+        if modelURL.pathExtension == "mlpackage" {
+            compiledURL = try MLModel.compileModel(at: modelURL)
+        } else {
+            compiledURL = modelURL
+        }
+>>>>>>> theirs
         model = try MLModel(contentsOf: compiledURL, configuration: configuration)
         let description = model.modelDescription
         guard description.inputDescriptionsByName["audio"]?.type == .multiArray,
@@ -187,12 +219,22 @@ final class CoreMLVocalIsolator: @unchecked Sendable {
         for chunkIndex in 0..<chunks {
             try Task.checkCancellation()
             let start = chunkIndex * stride
+<<<<<<< ours
             let predicted = try predictVocals(makeChunk(from: mix, start: start))
+=======
+            let chunk = makeChunk(from: mix, start: start)
+            let predicted = try predictVocals(chunk)
+>>>>>>> theirs
             for frame in 0..<segmentSamples {
                 let destination = start + frame
                 guard destination < total else { break }
                 let weight = window[frame]
+<<<<<<< ours
                 vocal[destination] += (predicted[frame * 2] + predicted[frame * 2 + 1]) * 0.5 * weight
+=======
+                let mono = (predicted[frame * 2] + predicted[frame * 2 + 1]) * 0.5
+                vocal[destination] += mono * weight
+>>>>>>> theirs
                 weights[destination] += weight
             }
             progress(Double(chunkIndex + 1) / Double(chunks))
@@ -204,6 +246,7 @@ final class CoreMLVocalIsolator: @unchecked Sendable {
     private func loadStereo44k(_ url: URL) throws -> [Float] {
         let file = try AVAudioFile(forReading: url)
         let target = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44_100, channels: 2, interleaved: false)!
+<<<<<<< ours
         guard let converter = AVAudioConverter(from: file.processingFormat, to: target) else { throw HarmonyError.invalidAudio }
         let capacity = AVAudioFrameCount(Double(file.length) * 44_100 / file.processingFormat.sampleRate + 1)
         let input = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length))!
@@ -217,6 +260,27 @@ final class CoreMLVocalIsolator: @unchecked Sendable {
         }
         if let error { throw error }
         guard let left = output.floatChannelData?[0], let right = output.floatChannelData?[1] else { throw HarmonyError.invalidAudio }
+=======
+        guard let converter = AVAudioConverter(from: file.processingFormat, to: target) else {
+            throw HarmonyError.invalidAudio
+        }
+        let outputCapacity = AVAudioFrameCount(Double(file.length) * 44_100 / file.processingFormat.sampleRate + 1)
+        let input = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length))!
+        try file.read(into: input)
+        let output = AVAudioPCMBuffer(pcmFormat: target, frameCapacity: outputCapacity)!
+        var consumed = false
+        var conversionError: NSError?
+        converter.convert(to: output, error: &conversionError) { _, status in
+            if consumed { status.pointee = .endOfStream; return nil }
+            consumed = true
+            status.pointee = .haveData
+            return input
+        }
+        if let conversionError { throw conversionError }
+        guard let left = output.floatChannelData?[0], let right = output.floatChannelData?[1] else {
+            throw HarmonyError.invalidAudio
+        }
+>>>>>>> theirs
         var interleaved = [Float](repeating: 0, count: Int(output.frameLength) * 2)
         for frame in 0..<Int(output.frameLength) {
             interleaved[frame * 2] = left[frame]
@@ -229,15 +293,25 @@ final class CoreMLVocalIsolator: @unchecked Sendable {
         var window = [Float](repeating: 1, count: segmentSamples)
         for index in 0..<overlapSamples {
             let weight = Float(index) / Float(overlapSamples)
+<<<<<<< ours
             window[index] = weight; window[segmentSamples - 1 - index] = weight
+=======
+            window[index] = weight
+            window[segmentSamples - 1 - index] = weight
+>>>>>>> theirs
         }
         return window
     }
 
     private func makeChunk(from mix: [Float], start: Int) -> [Float] {
         var chunk = [Float](repeating: 0, count: segmentSamples * 2)
+<<<<<<< ours
         let frames = mix.count / 2
         for frame in 0..<segmentSamples where start + frame < frames {
+=======
+        let frameCount = mix.count / 2
+        for frame in 0..<segmentSamples where start + frame < frameCount {
+>>>>>>> theirs
             chunk[frame * 2] = mix[(start + frame) * 2]
             chunk[frame * 2 + 1] = mix[(start + frame) * 2 + 1]
         }
@@ -251,6 +325,7 @@ final class CoreMLVocalIsolator: @unchecked Sendable {
             inputPointer[frame] = chunk[frame * 2]
             inputPointer[segmentSamples + frame] = chunk[frame * 2 + 1]
         }
+<<<<<<< ours
         inferenceLock.lock(); defer { inferenceLock.unlock() }
         let result = try model.prediction(from: MLDictionaryFeatureProvider(dictionary: ["audio": input]))
         guard let sources = result.featureValue(for: "sources")?.multiArrayValue, sources.count >= segmentSamples * 2 else {
@@ -261,6 +336,21 @@ final class CoreMLVocalIsolator: @unchecked Sendable {
         for frame in 0..<segmentSamples {
             vocal[frame * 2] = output[frame]
             vocal[frame * 2 + 1] = output[segmentSamples + frame]
+=======
+        inferenceLock.lock()
+        defer { inferenceLock.unlock() }
+        let provider = try MLDictionaryFeatureProvider(dictionary: ["audio": input])
+        let result = try model.prediction(from: provider)
+        guard let sources = result.featureValue(for: "sources")?.multiArrayValue,
+              sources.count >= segmentSamples * 2 else {
+            throw HarmonyError.modelsRequired
+        }
+        let outputPointer = sources.dataPointer.bindMemory(to: Float.self, capacity: sources.count)
+        var vocal = [Float](repeating: 0, count: segmentSamples * 2)
+        for frame in 0..<segmentSamples {
+            vocal[frame * 2] = outputPointer[frame]
+            vocal[frame * 2 + 1] = outputPointer[segmentSamples + frame]
+>>>>>>> theirs
         }
         return vocal
     }

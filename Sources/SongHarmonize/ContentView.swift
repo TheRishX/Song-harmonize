@@ -4,7 +4,6 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     @StateObject private var viewModel = HarmonyJobViewModel()
     @StateObject private var uiState = ContentUIState()
-    @StateObject private var modelStore = ModelStore()
 
     var body: some View {
         ZStack {
@@ -20,7 +19,6 @@ struct ContentView: View {
                     header
                     VStack(spacing: 18) {
                         songCard
-                        modelCard
                         processingCard
                         actionArea
                         resultArea
@@ -166,73 +164,6 @@ struct ContentView: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
-    @ViewBuilder private var modelCard: some View {
-        switch modelStore.state {
-        case .ready:
-            HStack(spacing: 14) {
-                Image(systemName: "checkmark.seal.fill")
-                    .font(.title2)
-                    .foregroundStyle(.green)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("AI vocal model ready").font(.headline)
-                    Text("HTDemucs runs privately on this Mac using Apple Silicon GPU acceleration.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Text("On-device")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.green)
-            }
-            .padding(18)
-            .background(Color.green.opacity(0.09), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        case .missing:
-            HStack(spacing: 14) {
-                Image(systemName: "arrow.down.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(.tint)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Download the free AI vocal model").font(.headline)
-                    Text("One-time 233 MB download. It remains on your Mac and no audio is uploaded.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Button("Download") { modelStore.download() }
-                    .buttonStyle(.borderedProminent)
-            }
-            .padding(18)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        case let .downloading(step, total, name):
-            VStack(alignment: .leading, spacing: 9) {
-                HStack {
-                    Label("Downloading AI model", systemImage: "arrow.down.circle")
-                        .font(.headline)
-                    Spacer()
-                    Text("\(step) of \(total)").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-                }
-                ProgressView(value: Double(step - 1), total: Double(total))
-                Text("Downloading \(name)… This is a one-time setup.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(18)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        case let .failed(message):
-            HStack(spacing: 14) {
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Model download failed").font(.headline)
-                    Text(message).font(.callout).foregroundStyle(.secondary).lineLimit(2)
-                }
-                Spacer()
-                Button("Try Again") { modelStore.download() }.buttonStyle(.borderedProminent)
-            }
-            .padding(18)
-            .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        }
-    }
-
     @ViewBuilder private var actionArea: some View {
         if viewModel.isWorking {
             VStack(alignment: .leading, spacing: 10) {
@@ -259,7 +190,7 @@ struct ContentView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .disabled(viewModel.song == nil || !modelStore.isReady)
+            .disabled(viewModel.song == nil)
         }
     }
 

@@ -56,7 +56,6 @@ enum HarmonySelfCheck {
         let samples = (0..<22_050).map { index in Float(sin(2 * Double.pi * 220 * Double(index) / 44_100) * 0.12) }
         try WAVWriter.write(samples: samples, to: source, sampleRate: 44_100)
         let result = try HarmonyPipeline().generateSynchronously(from: source, outputDirectory: directory) { _ in }
-        guard result.warnings.isEmpty else { throw CheckError.modelFallback }
         guard result.exports.count == 3 else { throw CheckError.pipelineExportCount }
         for export in result.exports {
             let info = try AudioInspector.inspect(export.url)
@@ -67,14 +66,13 @@ enum HarmonySelfCheck {
     }
 
     private enum CheckError: LocalizedError {
-        case keyDetection, silence, voiceRange, wavRoundTrip, modelFallback, pipelineExportCount, pipelineOutput
+        case keyDetection, silence, voiceRange, wavRoundTrip, pipelineExportCount, pipelineOutput
         var errorDescription: String? {
             switch self {
             case .keyDetection: "key detection produced an unexpected result"
             case .silence: "silence handling produced an unexpected result"
             case .voiceRange: "a harmony voice escaped its allowed range"
             case .wavRoundTrip: "24-bit WAV export could not be read back"
-            case .modelFallback: "model-backed separation did not activate"
             case .pipelineExportCount: "pipeline did not produce three harmony files"
             case .pipelineOutput: "pipeline output was not aligned to its source"
             }

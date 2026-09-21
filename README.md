@@ -6,11 +6,14 @@ Song Harmonize is a free, local-only macOS app for deriving three same-singer vo
 
 Open `Package.swift` in Xcode 16 or later, select the `SongHarmonize` scheme, and run. The command-line build can be checked with `swift test`.
 
-## Model download
+## Model assets
 
-The app shows a **Download AI Model** button on first launch. It downloads the MIT-licensed, 232 MB `HTDemucs_CoreML_FP16.mlpackage` directly from its public source, verifies the published SHA-256 hashes, and saves it under `Application Support/SongHarmonize/Models`. The app automatically connects to that local package once validation succeeds; the model is then available offline.
+The release app is designed to bundle two compiled Core ML model directories in `Sources/SongHarmonize/Resources/Models`:
 
-The music-theory planner and pitch tracker are app-native and require no additional model or network service. Keep the model's attribution and checksum information in `THIRD_PARTY_NOTICES.md` when distributing the app.
+- `Demucs.mlmodelc` — source separation; upstream code is MIT licensed.
+- `BasicPitch.mlmodelc` — note detection; upstream project is Apache-2.0 licensed.
+
+They are intentionally **not** represented by fake model binaries in source control. Add verified, compatible Core ML conversions and their model-card/license files during release packaging. Until those assets are added, the app remains usable in its clearly labelled preview-isolation mode, which derives harmony from the supplied mix and is not suitable for dry vocal stems.
 
 ## Release notes
 
